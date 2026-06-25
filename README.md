@@ -36,9 +36,9 @@ The pipeline executes synchronously, enforcing a clear separation of concerns ac
 
 ## 🌟 Production-Grade Features
 
-* **Idempotency by Design:** Multiple pipeline executions within the same temporal window will not cause data duplication or corrupt historical states. The pipeline uses an `INSERT OR REPLACE` strategy anchored on the primary key (`fecha_hora`).
+* **Idempotency by Design:** Multiple pipeline executions within the same temporal window will not cause data duplication or corrupt historical states. The pipeline uses an `INSERT OR REPLACE` strategy anchored on the primary key (`date_time`).
 * **Traceability & Monitoring:** Fully replaces standard output `print` statements with Python's native `logging` library. Logs are structured with ISO-8601 timestamps and distinct severity levels (`INFO`, `WARNING`, `ERROR`, `CRITICAL`) for seamless integration with log aggregators.
-* **Data Audit Trail:** Every row includes an execution timestamp (`procesado_en`) to ensure data lineage, allowing clear visibility into exactly when a specific record batch was processed and loaded.
+* **Data Audit Trail:** Every row includes an execution timestamp (`processed_at`) to ensure data lineage, allowing clear visibility into exactly when a specific record batch was processed and loaded.
 
 ---
 
@@ -46,10 +46,17 @@ The pipeline executes synchronously, enforcing a clear separation of concerns ac
 
 ```text
 .
+├── config/
+│   └── settings.py              # Configuration constants and logging setup
 ├── data/
 │   └── calidad_aire_sevilla.db  # Relational database file (Auto-generated)
+├── src/
+│   ├── __init__.py
+│   ├── extract.py               # API extraction logic
+│   ├── load.py                  # Database loading layer
+│   └── transform.py             # Data cleansing and transformation
 ├── .gitignore
-├── etl_script.py               # Main pipeline orchestrator and logic
+├── main.py                      # Main pipeline orchestrator
 ├── README.md
 └── requirements.txt            # Project dependencies pinned to specific versions
 ```
@@ -92,7 +99,7 @@ pip install -r requirements.txt
 To trigger the batch processing manually, run the main orchestrator script:
 
 ```bash
-python etl_script.py
+python main.py
 ```
 
 ---
@@ -103,11 +110,11 @@ The target table `metr_calidad_aire` is explicitly typed and optimized under the
 
 ```sql
 CREATE TABLE IF NOT EXISTS metr_calidad_aire (
-    fecha_hora TEXT PRIMARY KEY,
+    date_time TEXT PRIMARY KEY,
     pm10_ug_m3 REAL,
     pm25_ug_m3 REAL,
     no2_ug_m3 REAL,
-    procesado_en TEXT
+    processed_at TEXT
 );
 ```
 
@@ -115,11 +122,11 @@ CREATE TABLE IF NOT EXISTS metr_calidad_aire (
 
 | Field | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
-| `fecha_hora` | **TEXT** | **PRIMARY KEY** | Target measurement timestamp (Format: `YYYY-MM-DD HH:MM:SS`). |
+| `date_time` | **TEXT** | **PRIMARY KEY** | Target measurement timestamp (Format: `YYYY-MM-DD HH:MM:SS`). |
 | `pm10_ug_m3` | **REAL** | **NULLABLE** | Concentration of particulate matter < 10 µm in diameter (µg/m³). |
 | `pm25_ug_m3` | **REAL** | **NULLABLE** | Concentration of particulate matter < 2.5 µm in diameter (µg/m³). |
 | `no2_ug_m3` | **REAL** | **NULLABLE** | Nitrogen Dioxide concentration (µg/m³). |
-| `procesado_en` | **TEXT** | **NOT NULL** | System audit timestamp indicating when the row was loaded into the database. |
+| `processed_at` | **TEXT** | **NOT NULL** | System audit timestamp indicating when the row was loaded into the database. |
 
 ---
 
